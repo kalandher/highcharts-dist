@@ -1,5 +1,5 @@
 /**
- * @license Highcharts JS v8.2.2 (2020-10-22)
+ * @license Highcharts JS v8.2.2 (2021-01-18)
  *
  * Highcharts Drilldown module
  *
@@ -28,7 +28,7 @@
             obj[path] = fn.apply(null, args);
         }
     }
-    _registerModule(_modules, 'Extensions/Drilldown.js', [_modules['Core/Animation/AnimationUtilities.js'], _modules['Core/Axis/Axis.js'], _modules['Core/Chart/Chart.js'], _modules['Core/Color/Color.js'], _modules['Core/Globals.js'], _modules['Core/Options.js'], _modules['Core/Series/Point.js'], _modules['Core/Renderer/SVG/SVGRenderer.js'], _modules['Core/Axis/Tick.js'], _modules['Core/Utilities.js']], function (A, Axis, Chart, Color, H, O, Point, SVGRenderer, Tick, U) {
+    _registerModule(_modules, 'Extensions/Drilldown.js', [_modules['Core/Animation/AnimationUtilities.js'], _modules['Core/Axis/Axis.js'], _modules['Core/Chart/Chart.js'], _modules['Core/Color/Color.js'], _modules['Series/Column/ColumnSeries.js'], _modules['Core/Globals.js'], _modules['Core/Options.js'], _modules['Core/Color/Palette.js'], _modules['Core/Series/Point.js'], _modules['Core/Series/Series.js'], _modules['Core/Series/SeriesRegistry.js'], _modules['Core/Renderer/SVG/SVGRenderer.js'], _modules['Core/Axis/Tick.js'], _modules['Core/Utilities.js']], function (A, Axis, Chart, Color, ColumnSeries, H, O, palette, Point, Series, SeriesRegistry, SVGRenderer, Tick, U) {
         /* *
          *
          *  Highcharts Drilldown module
@@ -43,6 +43,7 @@
         var animObject = A.animObject;
         var noop = H.noop;
         var defaultOptions = O.defaultOptions;
+        var seriesTypes = SeriesRegistry.seriesTypes;
         var addEvent = U.addEvent,
             removeEvent = U.removeEvent,
             extend = U.extend,
@@ -165,9 +166,7 @@
         * @name Highcharts.DrillupEventObject#type
         * @type {"drillup"}
         */
-        var seriesTypes = H.seriesTypes,
-            PieSeries = seriesTypes.pie,
-            ColumnSeries = seriesTypes.column,
+        var PieSeries = seriesTypes.pie,
             ddSeriesId = 1;
         // Add language
         extend(defaultOptions.lang, 
@@ -249,7 +248,7 @@
                 /** @ignore-option */
                 cursor: 'pointer',
                 /** @ignore-option */
-                color: '#003399',
+                color: palette.highlightColor100,
                 /** @ignore-option */
                 fontWeight: 'bold',
                 /** @ignore-option */
@@ -273,7 +272,7 @@
              */
             activeDataLabelStyle: {
                 cursor: 'pointer',
-                color: '#003399',
+                color: palette.highlightColor100,
                 fontWeight: 'bold',
                 textDecoration: 'underline'
             },
@@ -1108,25 +1107,40 @@
         // On initialization of each point, identify its label and make it clickable.
         // Also, provide a list of points associated to that label.
         addEvent(Point, 'afterInit', function () {
-            var point = this,
-                series = point.series;
-            if (point.drilldown) {
+            var point = this;
+            if (point.drilldown && !point.unbindDrilldownClick) {
                 // Add the click event to the point
-                addEvent(point, 'click', function (e) {
-                    if (series.xAxis &&
-                        series.chart.options.drilldown.allowPointDrilldown ===
-                            false) {
-                        // #5822, x changed
-                        series.xAxis.drilldownCategory(point.x, e);
-                    }
-                    else {
-                        point.doDrilldown(void 0, void 0, e);
-                    }
-                });
+                point.unbindDrilldownClick = addEvent(point, 'click', handlePointClick);
             }
             return point;
         });
-        addEvent(H.Series, 'afterDrawDataLabels', function () {
+        addEvent(Point, 'update', function (e) {
+            var point = this,
+                options = e.options || {};
+            if (options.drilldown && !point.unbindDrilldownClick) {
+                // Add the click event to the point
+                point.unbindDrilldownClick = addEvent(point, 'click', handlePointClick);
+            }
+            else if (!options.drilldown &&
+                options.drilldown !== void 0 &&
+                point.unbindDrilldownClick) {
+                point.unbindDrilldownClick = point.unbindDrilldownClick();
+            }
+        });
+        var handlePointClick = function (e) {
+                var point = this,
+            series = point.series;
+            if (series.xAxis &&
+                series.chart.options.drilldown.allowPointDrilldown ===
+                    false) {
+                // #5822, x changed
+                series.xAxis.drilldownCategory(point.x, e);
+            }
+            else {
+                point.doDrilldown(void 0, void 0, e);
+            }
+        };
+        addEvent(Series, 'afterDrawDataLabels', function () {
             var css = this.chart.options.drilldown.activeDataLabelStyle,
                 renderer = this.chart.renderer,
                 styledMode = this.chart.styledMode;
@@ -1161,7 +1175,7 @@
             }
         };
         // Mark the trackers with a pointer
-        addEvent(H.Series, 'afterDrawTracker', function () {
+        addEvent(Series, 'afterDrawTracker', function () {
             var styledMode = this.chart.styledMode;
             this.points.forEach(function (point) {
                 if (point.drilldown && point.graphic) {

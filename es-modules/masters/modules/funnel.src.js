@@ -1,5 +1,5 @@
 /**
- * @license Highcharts JS v8.2.2 (2020-10-22)
+ * @license Highcharts JS v8.2.2 (2021-01-18)
  * @module highcharts/modules/funnel
  * @requires highcharts
  *
@@ -10,4 +10,5 @@
  * License: www.highcharts.com/license
  */
 'use strict';
-import '../../Series/FunnelSeries.js';
+import '../../Series/Funnel/FunnelSeries.js';
+import '../../Series/Pyramid/PyramidSeries.js';

@@ -1,5 +1,5 @@
 /**
- * @license Highcharts JS v8.2.2 (2020-10-22)
+ * @license Highcharts JS v8.2.2 (2021-01-18)
  *
  * Data module
  *
@@ -31,7 +31,7 @@
     _registerModule(_modules, 'Extensions/Ajax.js', [_modules['Core/Globals.js'], _modules['Core/Utilities.js']], function (H, U) {
         /* *
          *
-         *  (c) 2010-2017 Christer Vasseng, Torstein Honsi
+         *  (c) 2010-2021 Christer Vasseng, Torstein Honsi
          *
          *  License: www.highcharts.com/license
          *
@@ -182,12 +182,12 @@
 
         return exports;
     });
-    _registerModule(_modules, 'Extensions/Data.js', [_modules['Extensions/Ajax.js'], _modules['Core/Series/Series.js'], _modules['Core/Chart/Chart.js'], _modules['Core/Globals.js'], _modules['Core/Series/Point.js'], _modules['Core/Utilities.js']], function (Ajax, BaseSeries, Chart, H, Point, U) {
+    _registerModule(_modules, 'Extensions/Data.js', [_modules['Extensions/Ajax.js'], _modules['Core/Chart/Chart.js'], _modules['Core/Globals.js'], _modules['Core/Series/Point.js'], _modules['Core/Series/SeriesRegistry.js'], _modules['Core/Utilities.js']], function (Ajax, Chart, H, Point, SeriesRegistry, U) {
         /* *
          *
          *  Data module
          *
-         *  (c) 2012-2020 Torstein Honsi
+         *  (c) 2012-2021 Torstein Honsi
          *
          *  License: www.highcharts.com/license
          *
@@ -196,6 +196,7 @@
          * */
         var ajax = Ajax.ajax;
         var doc = H.doc;
+        var seriesTypes = SeriesRegistry.seriesTypes;
         var addEvent = U.addEvent,
             defined = U.defined,
             extend = U.extend,
@@ -205,7 +206,6 @@
             objectEach = U.objectEach,
             pick = U.pick,
             splat = U.splat;
-        var seriesTypes = BaseSeries.seriesTypes;
         /**
          * Callback function to modify the CSV before parsing it by the data module.
          *
@@ -1031,12 +1031,6 @@
                     }
                     for (; i < columnStr.length; i++) {
                         read(i);
-                        // Quoted string
-                        if (c === '#') {
-                            // The rest of the row is a comment
-                            push();
-                            return;
-                        }
                         if (c === '"') {
                             read(++i);
                             while (i < columnStr.length) {

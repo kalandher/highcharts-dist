@@ -1,5 +1,5 @@
 /**
- * @license Highcharts JS v8.2.2 (2020-10-22)
+ * @license Highcharts JS v8.2.2 (2021-01-18)
  * @module highcharts/modules/no-data-to-display
  * @requires highcharts
  *
